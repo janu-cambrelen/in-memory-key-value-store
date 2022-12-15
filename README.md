@@ -100,9 +100,10 @@ hold at least that amount. The capacity setting can be modified using the
 
 In general,`get` and `delete` operations on the `KeyValueStore`, have a time
 complexity of O(1) on average. In the worst case, the time complexity is
-O(n). This can occur when the number of elements reaches capacity and forces
-a resize or in unlikely event of hash collisions. For `put` operations,
-however, the time complexity is O(capacity).
+O(n). This can occur when the there is significant lock contention, the
+number of elements reaches capacity and forces a resize, or in unlikely
+event of hash collisions. For `put` operations, however, the time complexity
+is O(capacity).
 
 For this reason, modifying the capacity to a large number using the
 `KeyValueStoreBuilder` is _discouraged_ at this time and can have a
