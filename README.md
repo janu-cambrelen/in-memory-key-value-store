@@ -71,20 +71,25 @@ assert_eq!(kvs.get(&bytes_key), None);
 assert_eq!(kvs.get(&number_key), None);
 assert_eq!(kvs.get(&string_slice_key), None);
 
-// Re-add entries
-kvs.put(&bytes_key, &bytes_value);
-kvs.put(&number_key, &number_value);
-kvs.put(&string_slice_key, &string_slice_value);
+// Add new entries
+kvs.put(&Key::from(1), &Value::from("v1"));
+kvs.put(&Key::from(2), &Value::from("v2"));
+kvs.put(&Key::from(3), &Value::from("v3"));
+
+// Assert values
+assert_eq!(kvs.get(&Key::from(1)), Some(Value::from("v1")));
+assert_eq!(kvs.get(&Key::from(2)), Some(Value::from("v2")));
+assert_eq!(kvs.get(&Key::from(3)), Some(Value::from("v3")));
 
 // Remove entries
-kvs.delete(&bytes_key);
-kvs.delete(&number_key);
-kvs.delete(&string_slice_key);
+kvs.delete(&Key::from(1));
+kvs.delete(&Key::from(2));
+kvs.delete(&Key::from(3));
 
 // Assert entries no longer exist
-assert_eq!(kvs.get(&bytes_key), None);
-assert_eq!(kvs.get(&number_key), None);
-assert_eq!(kvs.get(&string_slice_key), None);
+assert_eq!(kvs.get(&Key::from(1)), None);
+assert_eq!(kvs.get(&Key::from(2)), None);
+assert_eq!(kvs.get(&Key::from(3)), None);
 ```
 This library can panic in the event the [`RwLock` becomes poisoned](https://doc.rust-lang.org/std/sync/struct.RwLock.html#poisoning).
 
