@@ -1,6 +1,5 @@
-//! A simple thread-safe key-value store written in Rust with no external
-//! dependencies. A single key-value store can hold keys and values of different
-//! types.
+//! A thread-safe key-value store, implemented in Rust with zero dependencies,
+//! that supports keys and values of different types within the same store.
 //!
 //! The `KeyValueStore` uses the standard library's [`HashMap`](https://doc.rust-lang.org/std/collections/struct.HashMap.html)
 //! as the underlying data structure. For thread-safety, it leverages [`RwLock`](https://doc.rust-lang.org/std/sync/struct.RwLock.html)
@@ -18,10 +17,8 @@
 //!
 //! # Basic Usage:
 //! ```rust
-//! use std::collections::{BTreeMap, HashMap};
 //! use std::str::from_utf8;
 //! use std::thread::sleep;
-//! use std::thread::spawn;
 //! use std::time::Duration;
 //!
 //! use in_mem_kv_store::key::Key;

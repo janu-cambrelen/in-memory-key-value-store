@@ -3,9 +3,9 @@ name = "in-mem-kv-store"
 version = "0.1.0"
 authors = ["Janu Cambrelen <janu.cambrelen@gmail.com>"]
 edition = "2021"
-description = "A thread-safe key-value store that supports keys and values of different types."
+description = "A thread-safe key-value store, implemented in Rust with zero dependencies, that supports keys and values of different types within the same store."
 repository = "https://github.com/janu-cambrelen/in-memory-key-value-store"
-keywords = ["map", "key-value", "thread-safe", "in-memory"]
+keywords = ["hashmap", "key-value", "thread-safe", "in-memory"]
 
 [dependencies]
 
