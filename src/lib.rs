@@ -121,6 +121,24 @@
 //!
 //! In general, the space complexity of the key-value store is O(n), where n is
 //! the number of elements in the store.
+//!
+//! # Test
+//! ```zsh
+//! cargo test
+//! ```
+//!
+//! # Bench
+//! ```zsh
+//! cargo bench
+//! ```
+//! # Docs
+//! ```zsh
+//! cargo doc --open
+//! ```
+//! [Generate README](https://github.com/livioribeiro/cargo-readme).
+//! ```zsh
+//! cargo readme > README.md
+//! ```
 
 #![warn(clippy::all, missing_docs)]
 
@@ -133,6 +151,7 @@ use std::collections::HashMap;
 use std::sync::{Arc, RwLock};
 use std::time::Instant;
 use value::Value;
+
 /// The core structure of this library. It is the key-value store that can be
 /// used between threads. It supports a number of dynamic types for `Key` and
 /// `Value`.
@@ -657,7 +676,9 @@ mod tests {
 
           for num in start..finish {
             if let None = kvs_clone.get(&Key::from(num as isize)) {
-              panic!("no value found")
+              // TODO(remove): a panic / test failure here isn't necessary but could be
+              // indicative of a performance issue
+              panic!("no value returned")
             }
           }
         })

@@ -1,9 +1,8 @@
 # in-mem-kv-store
 
-A simple thread-safe key-value store written it Rust with no external
+A simple thread-safe key-value store written in Rust with no external
 dependencies. A single key-value store can hold keys and values of different
-types. This means that a single key-value store instance could support the
-majority of the types your application uses.
+types.
 
 The `KeyValueStore` uses the standard library's [`HashMap`](https://doc.rust-lang.org/std/collections/struct.HashMap.html)
 as the underlying data structure. For thread-safety, it leverages [`RwLock`](https://doc.rust-lang.org/std/sync/struct.RwLock.html)
@@ -124,3 +123,21 @@ periodically to clean up expired entries, similar to a garbage collector.
 
 In general, the space complexity of the key-value store is O(n), where n is
 the number of elements in the store.
+
+## Test
+```zsh
+cargo test
+```
+
+## Bench
+```zsh
+cargo bench
+```
+## Docs
+```zsh
+cargo doc --open
+```
+[Generate README](https://github.com/livioribeiro/cargo-readme).
+```zsh
+cargo readme > README.md
+```
