@@ -1,12 +1,13 @@
 [package]
 name = "in-mem-kv-store"
 version = "0.1.0"
+authors = ["Janu Cambrelen <janu.cambrelen@gmail.com>"]
 edition = "2021"
-
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+description = "A thread-safe key-value store that supports keys and values of different types."
+repository = "https://github.com/janu-cambrelen/in-memory-key-value-store"
+keywords = ["map", "key-value", "thread-safe", "in-memory"]
 
 [dependencies]
-
 
 [dev-dependencies]
 criterion = "0.4.0"
