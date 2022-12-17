@@ -329,7 +329,11 @@ impl KeyValueStore {
   /// ```
   // This method is useful for testing, etc.
   pub fn len(&self) -> usize {
-    self.store.read().unwrap().len()
+    self
+      .store
+      .read()
+      .expect("A panic occurred, the RwLock is poisoned")
+      .len()
   }
 
   /// Returns whether key-value store contains zero elements.
@@ -345,7 +349,11 @@ impl KeyValueStore {
   /// ```
   // This method is useful for testing, etc.
   pub fn is_empty(&self) -> bool {
-    self.store.read().unwrap().is_empty()
+    self
+      .store
+      .read()
+      .expect("A panic occurred, the RwLock is poisoned")
+      .is_empty()
   }
 }
 
