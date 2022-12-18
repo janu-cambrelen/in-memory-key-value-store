@@ -124,23 +124,25 @@
 //! In general, the space complexity of the key-value store is O(n), where n is
 //! the number of elements in the store.
 //!
-//! # Test
+//! # Test:
 //! ```zsh
 //! cargo test
 //! ```
-//!
-//! # Bench
+//! # Bench:
 //! ```zsh
 //! cargo bench
 //! ```
-//! # Docs
+//! # Docs:
 //! ```zsh
 //! cargo doc --open
 //! ```
-//! [Generate README](https://github.com/livioribeiro/cargo-readme).
+//! [Generate README](https://github.com/livioribeiro/cargo-readme):
 //! ```zsh
 //! cargo readme > README.md
 //! ```
+//! # License:
+//! This project is licensed under the MIT License - see the
+//! [LICENSE-MIT](LICENSE-MIT) file for details.
 
 #![warn(clippy::all, missing_docs)]
 
@@ -374,8 +376,7 @@ impl Default for KeyValueStore {
 mod tests {
   use std::collections::{BTreeMap, HashMap};
   use std::str::from_utf8;
-  use std::thread::sleep;
-  use std::thread::spawn;
+  use std::thread;
   use std::time::Duration;
 
   use crate::key::Key;
@@ -583,7 +584,7 @@ mod tests {
     assert_eq!(kvs.get(&k_btree_map), Some(v_btree_map));
 
     // Wait until entries expire
-    sleep(ttl);
+    thread::sleep(ttl);
 
     // Assert entries no longer exist
     assert_eq!(kvs.get(&k_bytes), None);
@@ -644,63 +645,76 @@ mod tests {
 
   #[test]
   fn test_multiple_threads() {
-    let num_values = 10_000;
+    let num_values = 50_000;
 
     let kvs = KeyValueStore::builder().with_capacity(num_values).build();
 
     let num_cpu = std::thread::available_parallelism().unwrap().get();
-    // `num_values_per_cpu` will result in an "approximation" for a divisor that is
-    // not a factor of `num_values`
-    let num_values_per_cpu = num_values / num_cpu;
 
-    // writer threads
-    let writers: Vec<_> = (0..num_cpu)
+    // allocate approximately 80% of the CPU to writers and 20% to readers, rounding
+    // down to ensure we don't exceed the number of CPUs.
+    let num_writer_threads = (num_cpu as f64 * 0.8).floor() as usize;
+    let num_reader_threads = (num_cpu as f64 * 0.2).floor() as usize;
+
+    // evenly distribute values across threads
+    let num_values_per_writer = num_values / num_writer_threads;
+    let num_values_per_reader = num_values / num_reader_threads;
+
+    // spawn writer threads to write values to the store
+    let writers: Vec<_> = (0..num_writer_threads)
       .map(|i| {
         let mut kvs_clone = kvs.clone();
 
-        spawn(move || {
-          let start = num_values_per_cpu * i;
-          let finish = num_values_per_cpu * (i + 1);
+        thread::Builder::new()
+          .name(format!("Writer #{}", i))
+          .spawn(move || {
+            let start = num_values_per_writer * i;
+            let finish = num_values_per_writer * (i + 1);
 
-          for num in start..finish {
-            kvs_clone.put(
-              &Key::from(num as isize),
-              &Value::from(format!("Value # {}", num)),
-            );
-          }
-        })
+            for num in start..finish {
+              kvs_clone.put(
+                &Key::from(num as isize),
+                &Value::from(format!("Value # {}", num)),
+              );
+            }
+          })
+          .expect("could not spawn writer thread")
       })
       .collect();
 
-    // reader threads (two)
-    let readers: Vec<_> = (0..2)
+    // spawn reader threads to read values from the store  (after some writes have
+    // occurred)
+    let readers: Vec<_> = (0..num_reader_threads)
       .map(|i| {
         let kvs_clone = kvs.clone();
 
-        spawn(move || {
-          // start reading after some writes have occurred
-          sleep(Duration::from_millis(5));
+        thread::Builder::new()
+          .name(format!("Reader #{}", i))
+          .spawn(move || {
+            // The delay is to ensure that the writer threads have time to write.
+            thread::sleep(Duration::from_millis(5));
 
-          let start = num_values_per_cpu * i;
-          let finish = num_values_per_cpu * (i + 1);
+            let start = num_values_per_reader * i;
+            let finish = num_values_per_reader * (i + 1);
 
-          for num in start..finish {
-            if let None = kvs_clone.get(&Key::from(num as isize)) {
-              // TODO(remove): a panic / test failure here isn't necessary but could be
-              // indicative of a performance issue
-              panic!("no value returned")
+            for num in start..finish {
+              if let None = kvs_clone.get(&Key::from(num as isize)) {
+                // The delay should be sufficient for this test.  If the delay is not long
+                // enough, the test will fail.
+                panic!("no value returned")
+              }
             }
-          }
-        })
+          })
+          .expect("could not spawn reader thread")
       })
       .collect();
 
     for writer in writers {
-      writer.join().unwrap();
+      writer.join().expect("could not join writer thread");
     }
 
     for reader in readers {
-      reader.join().unwrap();
+      reader.join().expect("could not join reader thread");
     }
 
     assert_eq!(kvs.len(), num_values)

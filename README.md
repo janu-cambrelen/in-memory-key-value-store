@@ -126,20 +126,24 @@ periodically to clean up expired entries, similar to a garbage collector.
 In general, the space complexity of the key-value store is O(n), where n is
 the number of elements in the store.
 
-## Test
+## Test:
 ```zsh
 cargo test
 ```
-
-## Bench
+## Bench:
 ```zsh
 cargo bench
 ```
-## Docs
+## Docs:
 ```zsh
 cargo doc --open
 ```
-[Generate README](https://github.com/livioribeiro/cargo-readme).
+[Generate README](https://github.com/livioribeiro/cargo-readme):
 ```zsh
 cargo readme > README.md
 ```
+## License:
+This project is licensed under the MIT License - see the
+[LICENSE-MIT](LICENSE-MIT) file for details.
+
+License: MIT
