@@ -282,11 +282,13 @@ impl KeyValueStore {
       .write()
       .expect("A panic occurred, the RwLock is poisoned");
 
-    w.retain(|k, _| k.get_expiry().map_or(true, |x| x > Instant::now()));
+    let now = Instant::now();
+
+    w.retain(|k, _| k.get_expiry().map_or(true, |x| x > now));
     w.insert(key.clone(), value.clone());
   }
 
-  /// Removes a value from the key-value store. *****If a value already exists
+  /// Removes a value from the key-value store. If a value already exists
   /// for a given key ID, the value will be replaced.
   ///
   /// ```rust
@@ -692,7 +694,7 @@ mod tests {
           .name(format!("Reader #{}", i))
           .spawn(move || {
             // The delay is to ensure that the writer threads have time to write.
-            thread::sleep(Duration::from_millis(5));
+            thread::sleep(Duration::from_millis(250));
 
             let start = num_values_per_reader * i;
             let finish = num_values_per_reader * (i + 1);
@@ -710,11 +712,11 @@ mod tests {
       .collect();
 
     for writer in writers {
-      writer.join().expect("could not join writer thread");
+      writer.join().expect("could not join writer threads");
     }
 
     for reader in readers {
-      reader.join().expect("could not join reader thread");
+      reader.join().expect("could not join reader threads");
     }
 
     assert_eq!(kvs.len(), num_values)
