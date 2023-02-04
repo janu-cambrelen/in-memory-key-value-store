@@ -234,7 +234,8 @@ impl KeyValueStore {
   /// ```
   pub fn get(&self, key: &Key) -> Option<Value> {
     if let Some(expiry) = key.get_expiry() {
-      if expiry < &Instant::now() {
+      let now = Instant::now();
+      if expiry < &now {
         return None;
       }
     }
@@ -647,31 +648,41 @@ mod tests {
 
   #[test]
   fn test_multiple_threads() {
-    let num_values = 50_000;
+    // The target number of values to be written and read by the threads. The actual
+    // number of values may be less than this number if the number of values is not
+    // evenly divisible by the number of threads.
+    let target_num_values = 10_000;
 
-    let kvs = KeyValueStore::builder().with_capacity(num_values).build();
+    // Create a new key-value store with a capacity of `target_num_values`.
+    let kvs = KeyValueStore::builder()
+      .with_capacity(target_num_values)
+      .build();
 
-    let num_cpu = std::thread::available_parallelism().unwrap().get();
+    // The number of threads allocated to writers and readers is determined by
+    // the number of available CPUs. The number of CPUs is divided by two and
+    // rounded down to the nearest even number. The number of CPUs is then
+    // divided by two to evenly distribute the threads between writers and
+    // readers.
+    let cpu_allocation = (std::thread::available_parallelism().unwrap().get() & !1) / 2;
 
-    // allocate approximately 80% of the CPU to writers and 20% to readers, rounding
-    // down to ensure we don't exceed the number of CPUs.
-    let num_writer_threads = (num_cpu as f64 * 0.8).floor() as usize;
-    let num_reader_threads = (num_cpu as f64 * 0.2).floor() as usize;
+    // If the number of CPUs is less than two, abort this test case.
+    if cpu_allocation < 2 {
+      return;
+    }
 
-    // evenly distribute values across threads
-    let num_values_per_writer = num_values / num_writer_threads;
-    let num_values_per_reader = num_values / num_reader_threads;
+    // The number of values to be written and read by each thread.
+    let values_allocation = target_num_values / cpu_allocation;
 
-    // spawn writer threads to write values to the store
-    let writers: Vec<_> = (0..num_writer_threads)
+    // Spawn writer threads to write values to the store.
+    let writers: Vec<_> = (0..cpu_allocation)
       .map(|i| {
         let mut kvs_clone = kvs.clone();
 
         thread::Builder::new()
           .name(format!("Writer #{}", i))
           .spawn(move || {
-            let start = num_values_per_writer * i;
-            let finish = num_values_per_writer * (i + 1);
+            let start = values_allocation * i;
+            let finish = values_allocation * (i + 1);
 
             for num in start..finish {
               kvs_clone.put(
@@ -684,9 +695,9 @@ mod tests {
       })
       .collect();
 
-    // spawn reader threads to read values from the store  (after some writes have
-    // occurred)
-    let readers: Vec<_> = (0..num_reader_threads)
+    // Spawn reader threads to read values from the store, after some writes have
+    // occurred.
+    let readers: Vec<_> = (0..cpu_allocation)
       .map(|i| {
         let kvs_clone = kvs.clone();
 
@@ -694,10 +705,10 @@ mod tests {
           .name(format!("Reader #{}", i))
           .spawn(move || {
             // The delay is to ensure that the writer threads have time to write.
-            thread::sleep(Duration::from_millis(250));
+            thread::sleep(Duration::from_millis(25));
 
-            let start = num_values_per_reader * i;
-            let finish = num_values_per_reader * (i + 1);
+            let start = values_allocation * i;
+            let finish = values_allocation * (i + 1);
 
             for num in start..finish {
               if let None = kvs_clone.get(&Key::from(num as isize)) {
@@ -719,6 +730,8 @@ mod tests {
       reader.join().expect("could not join reader threads");
     }
 
-    assert_eq!(kvs.len(), num_values)
+    // Assert that the number of values in the store is equal to the number of
+    // values allocated to / processed by the threads.
+    assert_eq!(kvs.len(), cpu_allocation * values_allocation);
   }
 }
