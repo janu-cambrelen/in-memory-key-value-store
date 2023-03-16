@@ -15,7 +15,8 @@
 //! applications. It reduces the number of times the key-value store needs to be
 //! locked and unlocked `get` operations.
 //!
-//! # Basic Usage:
+//! # Basic Usage
+//!
 //! ```rust
 //! use std::str::from_utf8;
 //! use std::thread::sleep;
@@ -86,7 +87,6 @@
 //! assert_eq!(kvs.get(&Key::from(2)), None);
 //! assert_eq!(kvs.get(&Key::from(3)), None);
 //! ```
-//! This library can panic in the event the [`RwLock` becomes poisoned](https://doc.rust-lang.org/std/sync/struct.RwLock.html#poisoning).
 //!
 //! A key-value store created with the `new` associated function will, by
 //! default, set the `capacity` of the underlying `HashMap` to zero. This
@@ -124,27 +124,37 @@
 //! In general, the space complexity of the key-value store is O(n), where n is
 //! the number of elements in the store.
 //!
-//! # Test:
+//! # Test
+//!
 //! ```zsh
 //! cargo test
 //! ```
-//! # Bench:
+//!
+//! # Bench
+//!
 //! ```zsh
 //! cargo bench
 //! ```
-//! # Docs:
+//!
+//! # Docs
+//!
 //! ```zsh
 //! cargo doc --open
 //! ```
-//! [Generate README](https://github.com/livioribeiro/cargo-readme):
+//!
+//! [Generate README](https://github.com/livioribeiro/cargo-readme)
+//!
 //! ```zsh
 //! cargo readme > README.md
 //! ```
-//! # License:
+//!
+//! # License
+//!
 //! This project is licensed under the MIT License - see the
 //! [LICENSE-MIT](LICENSE-MIT) file for details.
 
 #![warn(clippy::all, missing_docs)]
+#![deny(unused_results, unsafe_code)]
 
 pub mod key;
 pub mod value;
@@ -166,6 +176,7 @@ pub struct KeyValueStore {
 
 /// A builder for `KeyValueStore`.  It currently only includes the option to set
 /// `capacity`.
+#[derive(Default)]
 pub struct KeyValueStoreBuilder {
   capacity: usize,
 }
@@ -181,12 +192,6 @@ impl KeyValueStoreBuilder {
     KeyValueStore {
       store: Arc::new(RwLock::new(HashMap::with_capacity(self.capacity))),
     }
-  }
-}
-
-impl Default for KeyValueStoreBuilder {
-  fn default() -> Self {
-    Self { capacity: 0 }
   }
 }
 
@@ -286,7 +291,7 @@ impl KeyValueStore {
     let now = Instant::now();
 
     w.retain(|k, _| k.get_expiry().map_or(true, |x| x > now));
-    w.insert(key.clone(), value.clone());
+    let _ = w.insert(key.clone(), value.clone());
   }
 
   /// Removes a value from the key-value store. If a value already exists
@@ -310,7 +315,7 @@ impl KeyValueStore {
   /// ```
   pub fn delete(&mut self, key: &Key) {
     // REF: https://doc.rust-lang.org/std/sync/struct.RwLock.html#poisoning
-    self
+    let _ = self
       .store
       .write()
       .expect("A panic occurred, the RwLock is poisoned")
@@ -507,7 +512,7 @@ mod tests {
     assert_eq!(raw_char, '😀');
     assert_eq!(raw_string_slice, "StringSlice");
     assert_eq!(raw_string, "String".to_string());
-    assert_eq!(raw_bool, true);
+    assert!(raw_bool);
     assert_eq!(raw_list, vec![Value::from(1), Value::from("one")]);
     assert_eq!(
       raw_hash_map,
@@ -643,7 +648,7 @@ mod tests {
     assert_eq!(raw_char, '😀');
     assert_eq!(raw_string_slice, "StringSlice");
     assert_eq!(raw_string, "String".to_string());
-    assert_eq!(raw_bool, true);
+    assert!(raw_bool);
   }
 
   #[test]
@@ -711,7 +716,7 @@ mod tests {
             let finish = values_allocation * (i + 1);
 
             for num in start..finish {
-              if let None = kvs_clone.get(&Key::from(num as isize)) {
+              if kvs_clone.get(&Key::from(num as isize)).is_none() {
                 // The delay should be sufficient for this test.  If the delay is not long
                 // enough, the test will fail.
                 panic!("no value returned")

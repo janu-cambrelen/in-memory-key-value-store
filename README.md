@@ -17,7 +17,8 @@ Using a `RwLock` can lead to better performance, especially for read-heavy
 applications. It reduces the number of times the key-value store needs to be
 locked and unlocked `get` operations.
 
-## Basic Usage:
+## Basic Usage
+
 ```rust
 use std::str::from_utf8;
 use std::thread::sleep;
@@ -88,7 +89,6 @@ assert_eq!(kvs.get(&Key::from(1)), None);
 assert_eq!(kvs.get(&Key::from(2)), None);
 assert_eq!(kvs.get(&Key::from(3)), None);
 ```
-This library can panic in the event the [`RwLock` becomes poisoned](https://doc.rust-lang.org/std/sync/struct.RwLock.html#poisoning).
 
 A key-value store created with the `new` associated function will, by
 default, set the `capacity` of the underlying `HashMap` to zero. This
@@ -126,23 +126,32 @@ periodically to clean up expired entries, similar to a garbage collector.
 In general, the space complexity of the key-value store is O(n), where n is
 the number of elements in the store.
 
-## Test:
+## Test
+
 ```zsh
 cargo test
 ```
-## Bench:
+
+## Bench
+
 ```zsh
 cargo bench
 ```
-## Docs:
+
+## Docs
+
 ```zsh
 cargo doc --open
 ```
-[Generate README](https://github.com/livioribeiro/cargo-readme):
+
+[Generate README](https://github.com/livioribeiro/cargo-readme)
+
 ```zsh
 cargo readme > README.md
 ```
-## License:
+
+## License
+
 This project is licensed under the MIT License - see the
 [LICENSE-MIT](LICENSE-MIT) file for details.
 
